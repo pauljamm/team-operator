@@ -1,0 +1,26 @@
+---
+defaults:
+  maxPods: 20
+  maxServices: 20
+  maxServicesLoadbalancers: 0
+  maxServicesNodeports: 0
+  podResources:
+    limits:
+      default:
+        cpu: 100m
+        memory: 128Mi
+      max:
+        cpu: 4
+        memory: 4Gi
+    requests:
+      default:
+        cpu: 100m
+        memory: 128Mi
+      min:
+        cpu: 50m
+        memory: 64Mi
+    maxLimitRequestRatio:
+      cpu: 2
+      memory: 2
+  tiller:
+    enabled: true

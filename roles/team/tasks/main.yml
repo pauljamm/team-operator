@@ -1,0 +1,245 @@
+---
+- name: Create a namespace
+  k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Namespace
+      metadata:
+        name: "{{ meta.name }}-{{ item.name }}"
+        labels:
+          inCharge: "{{ in_charge }}"
+  loop: "{{ environments }}"
+
+- name: Create a resource quota
+  k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: ResourceQuota
+      metadata:
+        namespace: "{{ meta.name }}-{{ item.name }}"
+        name: resource-quota
+      spec:
+        hard:
+          limits.cpu: "{{item.resources.limits.cpu}}"
+          limits.memory: "{{item.resources.limits.memory}}"
+          requests.cpu: "{{item.resources.requests.cpu}}"
+          requests.memory: "{{item.resources.requests.memory}}"
+          pods: "{{item.max_pods | default(defaults.maxPods)}}"
+          services: "{{item.max_services | default(defaults.maxServices)}}"
+          services.loadbalancers: >-
+            {{item.max_services_loadbalancers |
+            default(defaults.maxServicesLoadbalancers)}}
+          services.nodeports: >-
+            {{item.max_services_nodeports |
+            default(defaults.maxServicesNodeports)}}
+  loop: "{{ environments }}"
+
+- name: Create a limit range
+  k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: LimitRange
+      metadata:
+        namespace: "{{ meta.name }}-{{ item.name }}"
+        name: limit-range
+      spec:
+        limits:
+          - default:
+              cpu: >-
+                {{(((item.pod_resources|default(dict())).limits|default(dict())).default|default(dict())).cpu |
+                default(defaults.podResources.limits.default.cpu)}}
+              memory: >-
+                {{(((item.pod_resources|default(dict())).limits|default(dict())).default|default(dict())).memory |
+                default(defaults.podResources.limits.default.memory)}}
+            defaultRequest:
+              cpu: >-
+                {{(((item.pod_resources|default(dict())).requests|default(dict())).default|default(dict())).cpu |
+                default(defaults.podResources.requests.default.cpu)}}
+              memory: >-
+                {{(((item.pod_resources|default(dict())).requests|default(dict())).default|default(dict())).memory |
+                default(defaults.podResources.requests.default.memory)}}
+            max:
+              cpu: >-
+                {{(((item.pod_resources|default(dict())).limits|default(dict())).max|default(dict())).cpu |
+                default(defaults.podResources.limits.max.cpu)}}
+              memory: >-
+                {{(((item.pod_resources|default(dict())).limits|default(dict())).max|default(dict())).memory |
+                default(defaults.podResources.limits.max.memory)}}
+            min:
+              cpu: >-
+                {{(((item.pod_resources|default(dict())).requests|default(dict())).min|default(dict())).cpu |
+                default(defaults.podResources.requests.min.cpu)}}
+              memory: >-
+                {{(((item.pod_resources|default(dict())).requests|default(dict())).min|default(dict())).memory |
+                default(defaults.podResources.requests.min.memory)}}
+            maxLimitRequestRatio:
+              cpu: >-
+                {{((item.pod_resources|default(dict())).max_limit_request_ratio|default(dict())).cpu |
+                default(defaults.podResources.maxLimitRequestRatio.cpu)}}
+              memory: >-
+                {{((item.pod_resources|default(dict())).max_limit_request_ratio|default(dict())).memory |
+                default(defaults.podResources.maxLimitRequestRatio.memory)}}
+            type: Container
+  loop: "{{ environments }}"
+
+- name: Create a deploy service account
+  k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: ServiceAccount
+      metadata:
+        name: deploy
+        namespace: "{{ meta.name }}-{{ item.name }}"
+  loop: "{{ environments }}"
+
+- name: Create an edit role building
+  k8s:
+    state: present
+    definition:
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: RoleBinding
+      metadata:
+        name: edit
+        namespace: "{{ meta.name }}-{{ item.name }}"
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: ClusterRole
+        name: edit
+      subjects:
+        - apiGroup: rbac.authorization.k8s.io
+          kind: Group
+          name: "{{ meta.name }}:edit"
+        - kind: ServiceAccount
+          name: deploy
+          namespace: "{{ meta.name }}-{{ item.name }}"
+  loop: "{{ environments }}"
+
+- name: Create a view role building
+  k8s:
+    state: present
+    definition:
+      apiVersion: rbac.authorization.k8s.io/v1
+      kind: RoleBinding
+      metadata:
+        name: view
+        namespace: "{{ meta.name }}-{{ item.name }}"
+      roleRef:
+        apiGroup: rbac.authorization.k8s.io
+        kind: ClusterRole
+        name: view
+      subjects:
+        - apiGroup: rbac.authorization.k8s.io
+          kind: Group
+          name: "{{ meta.name }}:view"
+  loop: "{{ environments }}"
+
+- name: Create a tiller deployment
+  k8s:
+    state: present
+    definition:
+      apiVersion: extensions/v1beta1
+      kind: Deployment
+      metadata:
+        creationTimestamp: null
+        labels:
+          app: helm
+          name: tiller
+        name: tiller-deploy
+        namespace: "{{ meta.name }}-{{ item.name }}"
+      spec:
+        replicas: 1
+        strategy: {}
+        template:
+          metadata:
+            creationTimestamp: null
+            labels:
+              app: helm
+              name: tiller
+          spec:
+            containers:
+            - env:
+              - name: TILLER_NAMESPACE
+                value: "{{ meta.name }}-{{ item.name }}"
+              - name: TILLER_HISTORY_MAX
+                value: "10"
+              image: gcr.io/kubernetes-helm/tiller:v2.14.0
+              imagePullPolicy: IfNotPresent
+              livenessProbe:
+                httpGet:
+                  path: /liveness
+                  port: 44135
+                initialDelaySeconds: 1
+                timeoutSeconds: 1
+              name: tiller
+              ports:
+              - containerPort: 44134
+                name: tiller
+              - containerPort: 44135
+                name: http
+              readinessProbe:
+                httpGet:
+                  path: /readiness
+                  port: 44135
+                initialDelaySeconds: 1
+                timeoutSeconds: 1
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 128Mi
+                limits:
+                  cpu: 100m
+                  memory: 128Mi
+            serviceAccountName: deploy
+  when: (item.tiller|default(dict())).enabled | default(defaults.tiller.enabled) != false
+  loop: "{{ environments }}"
+
+- name: Create a tiller service
+  k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        labels:
+          app: helm
+          name: tiller
+        name: tiller-deploy
+        namespace: "{{ meta.name }}-{{ item.name }}"
+      spec:
+        ports:
+        - name: tiller
+          port: 44134
+          protocol: TCP
+          targetPort: tiller
+        selector:
+          app: helm
+          name: tiller
+        sessionAffinity: None
+        type: ClusterIP
+  when: (item.tiller|default(dict())).enabled | default(defaults.tiller.enabled) != false
+  loop: "{{ environments }}"
+
+# TODO: Should be used k8s module with absent state
+# when a https://github.com/ansible/ansible/issues/42302
+# will be resolved. Until then, tiller should be deleted by a kubectl command
+- name: Delete a tiller deployment
+  command: /opt/ansible/kubectl delete deployment tiller-deploy --namespace "{{ meta.name }}-{{ item.name }}"
+  ignore_errors: true
+  when: (item.tiller|default(dict())).enabled | default(defaults.tiller.enabled) == false
+  loop: "{{ environments }}"
+  tags:
+    - skip_ansible_lint
+
+- name: Delete a tiller service
+  k8s:
+    state: absent
+    api_version: v1
+    kind: Service
+    name: tiller-deploy
+    namespace: "{{ meta.name }}-{{ item.name }}"
+  when: (item.tiller|default(dict())).enabled | default(defaults.tiller.enabled) == false
+  loop: "{{ environments }}"

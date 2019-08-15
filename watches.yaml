@@ -1,0 +1,7 @@
+---
+- version: v1beta1
+  group: ops.southbridge.io
+  kind: Team
+  role: /opt/ansible/roles/team
+  watchClusterScopedResources: true
+  reconcilePeriod: 60s

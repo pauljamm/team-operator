@@ -1,0 +1,46 @@
+---
+apiVersion: ops.southbridge.io/v1beta1
+kind: Team
+metadata:
+  name: example-team
+spec:
+  inCharge: POSelivanov
+  environments:
+    - name: stage
+      maxPods: 30
+      resources:
+        limits:
+          cpu: 5
+          memory: 5Gi
+        requests:
+          cpu: 5
+          memory: 5Gi
+      podResources:
+        limits:
+          max:
+            cpu: 1
+            memory: 1Gi
+          default:
+            cpu: 100m
+            memory: 100Mi
+        requests:
+          min:
+            cpu: 50m
+            memory: 64Mi
+          default:
+            cpu: 100m
+            memory: 100Mi
+        maxLimitRequestRatio:
+          cpu: 2
+          memory: 2
+      tiller:
+        enabled: false
+
+    - name: qa
+      resources:
+        limits:
+          cpu: 5
+          memory: 5Gi
+        requests:
+          cpu: 5
+          memory: 5Gi

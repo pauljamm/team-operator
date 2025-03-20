@@ -1,0 +1,122 @@
+{% extends "layout.html" %}
+
+{% block title %}Команды{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 page-header">
+    <h1 class="h2 mb-0">
+        <i class="bi bi-people-fill me-2 text-primary"></i>
+        Команды
+    </h1>
+    <a href="{{ url_for('new_team') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i> Создать команду
+    </a>
+</div>
+
+{% if teams %}
+    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+        {% for team in teams %}
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-header d-flex justify-content-between align-items-center py-3">
+                    <h5 class="mb-0">{{ team.metadata.name }}</h5>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary border-0" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-three-dots-vertical"></i>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('show_team', name=team.metadata.name) }}">
+                                    <i class="bi bi-eye me-2"></i> Просмотр
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" href="{{ url_for('edit_team', name=team.metadata.name) }}">
+                                    <i class="bi bi-pencil me-2"></i> Редактировать
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#deleteTeamModal{{ loop.index }}">
+                                    <i class="bi bi-trash me-2"></i> Удалить
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p class="card-text text-muted">{{ team.spec.description }}</p>
+                    
+                    <div class="d-flex justify-content-between mt-3">
+                        <div>
+                            <span class="d-block mb-1 small text-muted">Окружения</span>
+                            {% if team.spec.environments %}
+                                <span class="badge bg-primary rounded-pill">{{ team.spec.environments|length }}</span>
+                            {% else %}
+                                <span class="badge bg-secondary rounded-pill">0</span>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <span class="d-block mb-1 small text-muted">Создана</span>
+                            <span class="badge bg-light text-dark">{{ team.metadata.creationTimestamp.split('T')[0] }}</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer bg-transparent border-top-0">
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('show_team', name=team.metadata.name) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye me-1"></i> Просмотр
+                        </a>
+                        <a href="{{ url_for('edit_team', name=team.metadata.name) }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-pencil me-1"></i> Редактировать
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Модальное окно подтверждения удаления -->
+            <div class="modal fade" id="deleteTeamModal{{ loop.index }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Подтверждение удаления</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="text-center mb-3">
+                                <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 3rem;"></i>
+                            </div>
+                            <p>Вы уверены, что хотите удалить команду <strong>{{ team.metadata.name }}</strong>?</p>
+                            <div class="alert alert-danger">
+                                <i class="bi bi-exclamation-circle-fill me-2"></i>
+                                Это действие нельзя отменить. Все окружения команды будут удалены.
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+                            <form action="{{ url_for('delete_team_route', name=team.metadata.name) }}" method="post">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                <button type="submit" class="btn btn-danger">
+                                    <i class="bi bi-trash me-1"></i> Удалить
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <i class="bi bi-people text-muted mb-3" style="font-size: 3rem;"></i>
+            <h3 class="h4 mb-3">Команды не найдены</h3>
+            <p class="text-muted mb-4">Создайте свою первую команду, чтобы начать работу</p>
+            <a href="{{ url_for('new_team') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-1"></i> Создать новую команду
+            </a>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,147 @@
+{% extends "layout.html" %}
+
+{% block title %}Пользователи{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 page-header">
+    <h1 class="h2 mb-0">
+        <i class="bi bi-person-fill me-2 text-primary"></i>
+        Пользователи
+    </h1>
+    <a href="{{ url_for('new_user') }}" class="btn btn-primary">
+        <i class="bi bi-plus-circle me-1"></i> Создать пользователя
+    </a>
+</div>
+
+{% if users %}
+    <div class="card">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="ps-4">Имя</th>
+                            <th>Полное имя</th>
+                            <th>Email</th>
+                            <th>Роль</th>
+                            <th>Команды</th>
+                            <th class="text-end pe-4">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td class="ps-4">
+                                <div class="d-flex align-items-center">
+                                    <div class="avatar-circle bg-primary text-white me-2">
+                                        {{ user.metadata.name[0]|upper }}
+                                    </div>
+                                    <span>{{ user.metadata.name }}</span>
+                                </div>
+                            </td>
+                            <td>{{ user.spec.fullName }}</td>
+                            <td>
+                                <a href="mailto:{{ user.spec.email }}" class="text-decoration-none">
+                                    {{ user.spec.email }}
+                                </a>
+                            </td>
+                            <td>
+                                {% if user.spec.role == 'admin' %}
+                                    <span class="badge bg-danger">Администратор</span>
+                                {% elif user.spec.role == 'developer' %}
+                                    <span class="badge bg-primary">Разработчик</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Наблюдатель</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if user.spec.teams %}
+                                    <span class="badge bg-info rounded-pill">{{ user.spec.teams|length }}</span>
+                                    {% if user.spec.teams|length <= 2 %}
+                                        {% for team in user.spec.teams %}
+                                            <span class="badge bg-light text-dark">{{ team }}</span>
+                                        {% endfor %}
+                                    {% endif %}
+                                {% else %}
+                                    <span class="badge bg-secondary rounded-pill">0</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-end pe-4">
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('show_user', name=user.metadata.name) }}" class="btn btn-sm btn-outline-primary" title="Просмотр">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('edit_user', name=user.metadata.name) }}" class="btn btn-sm btn-outline-secondary" title="Редактировать">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{{ url_for('download_kubeconfig', name=user.metadata.name) }}" class="btn btn-sm btn-outline-info" title="Скачать kubeconfig">
+                                        <i class="bi bi-download"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteUserModal{{ loop.index }}" title="Удалить">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
+                                
+                                <!-- Модальное окно подтверждения удаления -->
+                                <div class="modal fade" id="deleteUserModal{{ loop.index }}" tabindex="-1" aria-hidden="true">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title">Подтверждение удаления</h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <div class="text-center mb-3">
+                                                    <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 3rem;"></i>
+                                                </div>
+                                                <p>Вы уверены, что хотите удалить пользователя <strong>{{ user.metadata.name }}</strong>?</p>
+                                                <div class="alert alert-danger">
+                                                    <i class="bi bi-exclamation-circle-fill me-2"></i>
+                                                    Это действие нельзя отменить.
+                                                </div>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+                                                <form action="{{ url_for('delete_user_route', name=user.metadata.name) }}" method="post">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                                    <button type="submit" class="btn btn-danger">
+                                                        <i class="bi bi-trash me-1"></i> Удалить
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <style>
+        .avatar-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+    </style>
+{% else %}
+    <div class="card">
+        <div class="card-body text-center py-5">
+            <i class="bi bi-person text-muted mb-3" style="font-size: 3rem;"></i>
+            <h3 class="h4 mb-3">Пользователи не найдены</h3>
+            <p class="text-muted mb-4">Создайте своего первого пользователя, чтобы начать работу</p>
+            <a href="{{ url_for('new_user') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-1"></i> Создать нового пользователя
+            </a>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}

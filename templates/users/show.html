@@ -1,0 +1,226 @@
+{% extends "layout.html" %}
+
+{% block title %}Пользователь {{ user.metadata.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 page-header">
+    <div>
+        <a href="{{ url_for('list_users') }}" class="btn btn-sm btn-outline-secondary mb-2">
+            <i class="bi bi-arrow-left"></i> Назад к списку
+        </a>
+        <h1 class="h2 mb-0">
+            <i class="bi bi-person-fill me-2 text-primary"></i>
+            {{ user.metadata.name }}
+        </h1>
+    </div>
+    <div>
+        <a href="{{ url_for('download_kubeconfig', name=user.metadata.name) }}" class="btn btn-info">
+            <i class="bi bi-download me-1"></i> Скачать kubeconfig
+        </a>
+        <a href="{{ url_for('edit_user', name=user.metadata.name) }}" class="btn btn-primary ms-2">
+            <i class="bi bi-pencil me-1"></i> Редактировать
+        </a>
+        <button type="button" class="btn btn-outline-danger ms-2" data-bs-toggle="modal" data-bs-target="#deleteUserModal">
+            <i class="bi bi-trash me-1"></i> Удалить
+        </button>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Профиль</h5>
+                {% if user.spec.role == 'admin' %}
+                    <span class="badge bg-danger">Администратор</span>
+                {% elif user.spec.role == 'developer' %}
+                    <span class="badge bg-primary">Разработчик</span>
+                {% else %}
+                    <span class="badge bg-secondary">Наблюдатель</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <div class="avatar-circle bg-primary text-white mx-auto mb-3">
+                        {{ user.metadata.name[0]|upper }}
+                    </div>
+                    <h5 class="mb-1">{{ user.spec.fullName }}</h5>
+                    <p class="text-muted mb-0">{{ user.metadata.name }}</p>
+                </div>
+                
+                <div class="mb-4">
+                    <h6 class="text-muted mb-2">Контактная информация</h6>
+                    <p class="d-flex align-items-center mb-2">
+                        <i class="bi bi-envelope me-2"></i>
+                        <a href="mailto:{{ user.spec.email }}" class="text-decoration-none">{{ user.spec.email }}</a>
+                    </p>
+                </div>
+                
+                <div class="mb-4">
+                    <h6 class="text-muted mb-2">Роль в системе</h6>
+                    <p class="mb-0">
+                        {% if user.spec.role == 'admin' %}
+                            <i class="bi bi-shield-lock-fill me-2 text-danger"></i> Администратор
+                        {% elif user.spec.role == 'developer' %}
+                            <i class="bi bi-code-square me-2 text-primary"></i> Разработчик
+                        {% else %}
+                            <i class="bi bi-eye-fill me-2 text-secondary"></i> Наблюдатель
+                        {% endif %}
+                    </p>
+                </div>
+                
+                <div class="mb-0">
+                    <h6 class="text-muted mb-2">Дополнительная информация</h6>
+                    <p class="d-flex align-items-center mb-2">
+                        <i class="bi bi-calendar me-2"></i>
+                        <span>Создан: {{ user.metadata.creationTimestamp.split('T')[0] }}</span>
+                    </p>
+                    <p class="d-flex align-items-center mb-0">
+                        <i class="bi bi-people me-2"></i>
+                        <span>Команды: {{ user.spec.teams|length if user.spec.teams else 0 }}</span>
+                    </p>
+                </div>
+            </div>
+            
+            {% if user.status and user.status['team-operator'] and user.status['team-operator'].kubeconfig_created %}
+            <div class="card-footer bg-light">
+                <div class="d-grid">
+                    <a href="{{ url_for('download_kubeconfig', name=user.metadata.name) }}" class="btn btn-primary">
+                        <i class="bi bi-download me-2"></i> Скачать kubeconfig
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="col-lg-8">
+        {% if user.spec.teams %}
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Команды пользователя</h5>
+                <span class="badge bg-primary rounded-pill">{{ user.spec.teams|length }}</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for team_name in user.spec.teams %}
+                    <div class="list-group-item d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <div class="team-icon bg-primary text-white me-3">
+                                <i class="bi bi-people-fill"></i>
+                            </div>
+                            <div>
+                                <h6 class="mb-0">{{ team_name }}</h6>
+                                <small class="text-muted">Команда</small>
+                            </div>
+                        </div>
+                        <a href="{{ url_for('show_team', name=team_name) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye me-1"></i> Просмотр
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="card mb-4">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-people text-muted mb-3" style="font-size: 3rem;"></i>
+                <h3 class="h5 mb-3">Пользователь не состоит ни в одной команде</h3>
+                <p class="text-muted mb-4">Добавьте пользователя в команду, чтобы предоставить ему доступ к окружениям</p>
+                <a href="{{ url_for('edit_user', name=user.metadata.name) }}" class="btn btn-primary">
+                    <i class="bi bi-pencil me-1"></i> Редактировать пользователя
+                </a>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">Доступ к кластеру</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info mb-4">
+                    <div class="d-flex">
+                        <div class="me-3">
+                            <i class="bi bi-info-circle-fill" style="font-size: 2rem;"></i>
+                        </div>
+                        <div>
+                            <h5 class="alert-heading">Как предоставить доступ</h5>
+                            <p class="mb-0">Скачайте kubeconfig файл и передайте его пользователю. Файл содержит токен для аутентификации в кластере Kubernetes.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <h6>Инструкция для пользователя:</h6>
+                    <ol class="mb-0">
+                        <li>Скачайте kubeconfig файл</li>
+                        <li>Сохраните его как <code>~/.kube/config</code> или укажите путь через переменную <code>KUBECONFIG</code></li>
+                        <li>Используйте команду <code>kubectl</code> для работы с кластером</li>
+                    </ol>
+                </div>
+                
+                <div class="d-grid">
+                    <a href="{{ url_for('download_kubeconfig', name=user.metadata.name) }}" class="btn btn-lg btn-primary">
+                        <i class="bi bi-download me-2"></i> Скачать kubeconfig
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .avatar-circle {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        font-size: 2rem;
+    }
+    
+    .team-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+</style>
+
+<!-- Модальное окно подтверждения удаления -->
+<div class="modal fade" id="deleteUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Подтверждение удаления</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 3rem;"></i>
+                </div>
+                <p>Вы уверены, что хотите удалить пользователя <strong>{{ user.metadata.name }}</strong>?</p>
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-circle-fill me-2"></i>
+                    Это действие нельзя отменить.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+                <form action="{{ url_for('delete_user_route', name=user.metadata.name) }}" method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash me-1"></i> Удалить
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

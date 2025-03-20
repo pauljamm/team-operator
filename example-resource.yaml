@@ -1,0 +1,57 @@
+apiVersion: team.example.com/v1
+kind: Team
+metadata:
+  name: dev-team
+spec:
+  description: "Команда разработки"
+  users:
+    - john-doe
+    - jane-smith
+  environments:
+    - name: dev
+      description: "Окружение разработки"
+      labels:
+        tier: development
+        criticality: low
+      quota:
+        cpu: "10"
+        memory: "20Gi"
+        cpu_limit: "20"
+        memory_limit: "40Gi"
+        pods: "20"
+        services: "10"
+      network_policy:
+        ingress:
+          - from:
+              - namespaceSelector:
+                  matchLabels:
+                    tier: development
+        egress:
+          - to:
+              - namespaceSelector: {}
+    
+    - name: staging
+      description: "Окружение тестирования"
+      labels:
+        tier: staging
+        criticality: medium
+      quota:
+        cpu: "20"
+        memory: "40Gi"
+        cpu_limit: "40"
+        memory_limit: "80Gi"
+        pods: "30"
+        services: "15"
+      
+    - name: prod
+      description: "Продакшн окружение"
+      labels:
+        tier: production
+        criticality: high
+      quota:
+        cpu: "50"
+        memory: "100Gi"
+        cpu_limit: "100"
+        memory_limit: "200Gi"
+        pods: "50"
+        services: "25"

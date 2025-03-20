@@ -1,0 +1,140 @@
+{% extends "layout.html" %}
+
+{% block title %}Создание команды{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Создание новой команды</h1>
+    <a href="{{ url_for('list_teams') }}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Назад к списку
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" action="{{ url_for('new_team') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="mb-3">
+                <label for="name" class="form-label">Имя команды</label>
+                <input type="text" class="form-control" id="name" name="name" required pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?" title="Имя должно содержать только строчные буквы, цифры и дефисы, и не должно начинаться или заканчиваться дефисом">
+                <div class="form-text">Имя должно содержать только строчные буквы, цифры и дефисы, и не должно начинаться или заканчиваться дефисом.</div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="description" class="form-label">Описание</label>
+                <textarea class="form-control" id="description" name="description" rows="3" required></textarea>
+            </div>
+            
+            
+            <h4 class="mt-4 mb-3">Окружения</h4>
+            <div id="environments-container">
+                <!-- Здесь будут добавляться окружения -->
+            </div>
+            
+            <input type="hidden" id="env_count" name="env_count" value="0">
+            
+            <button type="button" class="btn btn-outline-primary mb-4" id="add-environment">
+                <i class="bi bi-plus-circle"></i> Добавить окружение
+            </button>
+            
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">Создать команду</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const addEnvironmentBtn = document.getElementById('add-environment');
+        const environmentsContainer = document.getElementById('environments-container');
+        const envCountInput = document.getElementById('env_count');
+        
+        let envCount = 0;
+        
+        addEnvironmentBtn.addEventListener('click', function() {
+            const envId = envCount;
+            
+            const envDiv = document.createElement('div');
+            envDiv.className = 'card mb-3';
+            envDiv.innerHTML = `
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Окружение #${envCount + 1}</h5>
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-env" data-env-id="${envId}">
+                        <i class="bi bi-trash"></i> Удалить
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="env_name_${envId}" class="form-label">Имя окружения</label>
+                            <input type="text" class="form-control" id="env_name_${envId}" name="env_name_${envId}" required pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?" title="Имя должно содержать только строчные буквы, цифры и дефисы, и не должно начинаться или заканчиваться дефисом">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="env_description_${envId}" class="form-label">Описание</label>
+                            <input type="text" class="form-control" id="env_description_${envId}" name="env_description_${envId}" required>
+                        </div>
+                    </div>
+                    
+                    <h6 class="mb-3">Квоты ресурсов</h6>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="env_cpu_${envId}" class="form-label">CPU Request</label>
+                            <input type="text" class="form-control" id="env_cpu_${envId}" name="env_cpu_${envId}" value="10">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="env_memory_${envId}" class="form-label">Memory Request</label>
+                            <input type="text" class="form-control" id="env_memory_${envId}" name="env_memory_${envId}" value="20Gi">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="env_pods_${envId}" class="form-label">Pods</label>
+                            <input type="text" class="form-control" id="env_pods_${envId}" name="env_pods_${envId}" value="20">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="env_cpu_limit_${envId}" class="form-label">CPU Limit</label>
+                            <input type="text" class="form-control" id="env_cpu_limit_${envId}" name="env_cpu_limit_${envId}" value="20">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="env_memory_limit_${envId}" class="form-label">Memory Limit</label>
+                            <input type="text" class="form-control" id="env_memory_limit_${envId}" name="env_memory_limit_${envId}" value="40Gi">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="env_services_${envId}" class="form-label">Services</label>
+                            <input type="text" class="form-control" id="env_services_${envId}" name="env_services_${envId}" value="10">
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            environmentsContainer.appendChild(envDiv);
+            envCount++;
+            envCountInput.value = envCount;
+            
+            // Добавляем обработчик для кнопки удаления
+            const removeBtn = envDiv.querySelector('.remove-env');
+            removeBtn.addEventListener('click', function() {
+                environmentsContainer.removeChild(envDiv);
+                updateEnvCount();
+            });
+        });
+        
+        function updateEnvCount() {
+            const envDivs = environmentsContainer.querySelectorAll('.card');
+            envCount = envDivs.length;
+            envCountInput.value = envCount;
+            
+            // Обновляем номера окружений
+            envDivs.forEach((div, index) => {
+                const header = div.querySelector('.card-header h5');
+                header.textContent = `Окружение #${index + 1}`;
+            });
+        }
+        
+        // Добавляем первое окружение по умолчанию
+        addEnvironmentBtn.click();
+    });
+</script>
+{% endblock %}

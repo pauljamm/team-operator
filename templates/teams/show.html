@@ -1,0 +1,310 @@
+{% extends "layout.html" %}
+
+{% block title %}Команда {{ team.metadata.name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 page-header">
+    <div>
+        <a href="{{ url_for('list_teams') }}" class="btn btn-sm btn-outline-secondary mb-2">
+            <i class="bi bi-arrow-left"></i> Назад к списку
+        </a>
+        <h1 class="h2 mb-0">
+            <i class="bi bi-people-fill me-2 text-primary"></i>
+            {{ team.metadata.name }}
+        </h1>
+    </div>
+    <div>
+        <a href="{{ url_for('edit_team', name=team.metadata.name) }}" class="btn btn-primary">
+            <i class="bi bi-pencil me-1"></i> Редактировать
+        </a>
+        <button type="button" class="btn btn-outline-danger ms-2" data-bs-toggle="modal" data-bs-target="#deleteTeamModal">
+            <i class="bi bi-trash me-1"></i> Удалить
+        </button>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Информация</h5>
+                <span class="badge bg-primary">Команда</span>
+            </div>
+            <div class="card-body">
+                <div class="mb-4">
+                    <h6 class="text-muted mb-2">Описание</h6>
+                    <p>{{ team.spec.description }}</p>
+                </div>
+                
+                <div class="mb-4">
+                    <h6 class="text-muted mb-2">Создана</h6>
+                    <p class="mb-0">{{ team.metadata.creationTimestamp.split('T')[0] }}</p>
+                </div>
+                
+                <div class="mb-0">
+                    <h6 class="text-muted mb-2">Статистика</h6>
+                    <div class="d-flex justify-content-between">
+                        <div class="text-center">
+                            <span class="d-block h4 mb-0">{{ team.spec.environments|length }}</span>
+                            <small class="text-muted">Окружений</small>
+                        </div>
+                        <div class="text-center">
+                            <span class="d-block h4 mb-0">{{ team.spec.users|length if team.spec.users else 0 }}</span>
+                            <small class="text-muted">Пользователей</small>
+                        </div>
+                        <div class="text-center">
+                            <span class="d-block h4 mb-0">{{ team.status['team-operator'].namespaces|length if team.status and team.status['team-operator'] and team.status['team-operator'].namespaces else 0 }}</span>
+                            <small class="text-muted">Namespace</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-8 mb-4">
+        
+        {% if team.spec.environments %}
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Окружения</h5>
+                <span class="badge bg-primary rounded-pill">{{ team.spec.environments|length }}</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="accordion accordion-flush" id="environmentsAccordion">
+                    {% for env in team.spec.environments %}
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading{{ loop.index }}">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ loop.index }}">
+                                <div class="d-flex align-items-center w-100">
+                                    <div class="me-auto">
+                                        <strong>{{ env.name }}</strong>
+                                        <span class="text-muted ms-2">{{ env.description }}</span>
+                                    </div>
+                                    <span class="badge bg-light text-dark me-2">{{ team.metadata.name }}-{{ env.name }}</span>
+                                </div>
+                            </button>
+                        </h2>
+                        <div id="collapse{{ loop.index }}" class="accordion-collapse collapse" aria-labelledby="heading{{ loop.index }}" data-bs-parent="#environmentsAccordion">
+                            <div class="accordion-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6 class="mb-3">Основная информация</h6>
+                                        <dl class="row mb-0">
+                                            <dt class="col-sm-4">Namespace:</dt>
+                                            <dd class="col-sm-8"><code>{{ team.metadata.name }}-{{ env.name }}</code></dd>
+                                            
+                                            <dt class="col-sm-4">Описание:</dt>
+                                            <dd class="col-sm-8">{{ env.description }}</dd>
+                                            
+                                            {% if env.labels %}
+                                            <dt class="col-sm-4">Метки:</dt>
+                                            <dd class="col-sm-8">
+                                                {% for key, value in env.labels.items() %}
+                                                <span class="badge bg-light text-dark">{{ key }}: {{ value }}</span>
+                                                {% endfor %}
+                                            </dd>
+                                            {% endif %}
+                                        </dl>
+                                    </div>
+                                    
+                                    <div class="col-md-6">
+                                        {% if env.quota %}
+                                        <h6 class="mb-3">Квоты ресурсов</h6>
+                                        <div class="table-responsive">
+                                            <table class="table table-sm table-bordered mb-0">
+                                                <thead class="table-light">
+                                                    <tr>
+                                                        <th>Ресурс</th>
+                                                        <th>Запрос</th>
+                                                        <th>Лимит</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>CPU</td>
+                                                        <td>{{ env.quota.cpu }}</td>
+                                                        <td>{{ env.quota.cpu_limit }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Memory</td>
+                                                        <td>{{ env.quota.memory }}</td>
+                                                        <td>{{ env.quota.memory_limit }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Pods</td>
+                                                        <td colspan="2" class="text-center">{{ env.quota.pods }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>Services</td>
+                                                        <td colspan="2" class="text-center">{{ env.quota.services }}</td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <!-- Визуализация использования ResourceQuota -->
+                                <div class="row mt-3">
+                                    <div class="col-12">
+                                        <div class="card">
+                                            <div class="card-header py-1 px-2 bg-light d-flex justify-content-between">
+                                                <span>Использование ресурсов</span>
+                                                <button class="btn btn-sm btn-outline-primary py-0 px-1" 
+                                                        onclick="refreshQuotaData('{{ team.metadata.name }}-{{ env.name }}')">
+                                                    <i class="bi bi-arrow-clockwise"></i>
+                                                </button>
+                                            </div>
+                                            <div class="card-body p-2" id="quota-{{ team.metadata.name }}-{{ env.name }}">
+                                                <div class="text-center py-2">
+                                                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                                        <span class="visually-hidden">Загрузка...</span>
+                                                    </div>
+                                                    <span class="ms-2">Загрузка данных...</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    .avatar-circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+    }
+</style>
+
+<script>
+    // Функция для загрузки данных ResourceQuota
+    function refreshQuotaData(namespace) {
+        const quotaElement = document.getElementById(`quota-${namespace}`);
+        
+        if (quotaElement) {
+            quotaElement.innerHTML = `
+                <div class="text-center py-2">
+                    <div class="spinner-border spinner-border-sm text-primary" role="status">
+                        <span class="visually-hidden">Загрузка...</span>
+                    </div>
+                    <span class="ms-2">Загрузка данных...</span>
+                </div>
+            `;
+            
+            // Запрос к API для получения данных ResourceQuota
+            fetch(`/api/namespaces/${namespace}/quota`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Ошибка при получении данных');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.resources && data.resources.length > 0) {
+                        let html = '';
+                        
+                        data.resources.forEach(resource => {
+                            const percentage = resource.percentage !== null ? resource.percentage : 0;
+                            let colorClass = 'bg-success';
+                            
+                            if (percentage > 80) {
+                                colorClass = 'bg-danger';
+                            } else if (percentage > 60) {
+                                colorClass = 'bg-warning';
+                            }
+                            
+                            html += `
+                                <div class="mb-2">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span>${resource.name}:</span>
+                                        <span>${resource.used} / ${resource.hard}</span>
+                                    </div>
+                                    <div class="progress" style="height: 10px;">
+                                        <div class="progress-bar ${colorClass}" role="progressbar" 
+                                             style="width: ${percentage}%;" 
+                                             aria-valuenow="${percentage}" 
+                                             aria-valuemin="0" 
+                                             aria-valuemax="100">
+                                            ${Math.round(percentage)}%
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        
+                        quotaElement.innerHTML = html;
+                    } else {
+                        quotaElement.innerHTML = `
+                            <div class="alert alert-info mb-0">
+                                <i class="bi bi-info-circle me-2"></i>
+                                Данные об использовании ресурсов недоступны
+                            </div>
+                        `;
+                    }
+                })
+                .catch(error => {
+                    console.error('Ошибка:', error);
+                    quotaElement.innerHTML = `
+                        <div class="alert alert-danger mb-0">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Ошибка при загрузке данных: ${error.message}
+                        </div>
+                    `;
+                });
+        }
+    }
+    
+    // Загружаем данные для всех окружений при загрузке страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        {% for env in team.spec.environments %}
+            refreshQuotaData('{{ team.metadata.name }}-{{ env.name }}');
+        {% endfor %}
+    });
+</script>
+
+<!-- Модальное окно подтверждения удаления -->
+<div class="modal fade" id="deleteTeamModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Подтверждение удаления</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <i class="bi bi-exclamation-triangle-fill text-danger" style="font-size: 3rem;"></i>
+                </div>
+                <p>Вы уверены, что хотите удалить команду <strong>{{ team.metadata.name }}</strong>?</p>
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-circle-fill me-2"></i>
+                    Это действие нельзя отменить. Все окружения команды будут удалены.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Отмена</button>
+                <form action="{{ url_for('delete_team_route', name=team.metadata.name) }}" method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash me-1"></i> Удалить
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

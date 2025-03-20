@@ -1,0 +1,430 @@
+{% extends "layout.html" %}
+
+{% block title %}Kubernetes Team Operator{% endblock %}
+
+{% block content %}
+<div class="hero-section py-5 mb-4">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-7 text-center text-lg-start">
+                <h1 class="display-4 fw-bold mb-3 text-gradient">Kubernetes Team Operator</h1>
+                <p class="lead fs-4 text-muted mb-4">Управление командами и пользователями в кластере Kubernetes с помощью удобного веб-интерфейса</p>
+                <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center justify-content-lg-start mb-5">
+                    <a href="/teams" class="btn btn-primary btn-lg px-4 py-3 shadow-sm">
+                        <i class="bi bi-people-fill me-2"></i> Управление командами
+                    </a>
+                    <a href="/users" class="btn btn-outline-primary btn-lg px-4 py-3">
+                        <i class="bi bi-person-fill me-2"></i> Управление пользователями
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-5 d-none d-lg-block">
+                <div class="position-relative">
+                    <div class="dashboard-preview shadow-lg rounded-4 overflow-hidden">
+                        <img src="https://cdn.jsdelivr.net/gh/kubernetes/kubernetes@master/logo/logo.svg" alt="Kubernetes Logo" class="img-fluid p-5">
+                    </div>
+                    <div class="position-absolute top-0 end-0 translate-middle-y">
+                        <div class="floating-badge bg-primary text-white shadow rounded-pill px-3 py-2">
+                            <i class="bi bi-check-circle-fill me-1"></i> Kubernetes Native
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Статистика -->
+<div class="stats-section py-4 mb-5">
+    <div class="container">
+        <div class="card border-0 shadow-sm rounded-4 bg-gradient-light overflow-hidden">
+            <div class="card-body p-0">
+                <div class="row g-0">
+                    <div class="col-md-3 col-6 stats-item">
+                        <div class="p-4 text-center h-100 d-flex flex-column justify-content-center">
+                            <div class="display-4 fw-bold text-primary mb-2 counter">{{ stats.teams_count }}</div>
+                            <div class="text-muted">Команд</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 stats-item">
+                        <div class="p-4 text-center h-100 d-flex flex-column justify-content-center">
+                            <div class="display-4 fw-bold text-primary mb-2 counter">{{ stats.users_count }}</div>
+                            <div class="text-muted">Пользователей</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 stats-item">
+                        <div class="p-4 text-center h-100 d-flex flex-column justify-content-center">
+                            <div class="display-4 fw-bold text-primary mb-2 counter">{{ stats.environments_count }}</div>
+                            <div class="text-muted">Окружений</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 col-6 stats-item">
+                        <div class="p-4 text-center h-100 d-flex flex-column justify-content-center">
+                            <div class="roles-badges mb-2">
+                                <span class="badge bg-danger me-1 fs-6">{{ stats.admin_count }}</span>
+                                <span class="badge bg-primary me-1 fs-6">{{ stats.developer_count }}</span>
+                                <span class="badge bg-secondary fs-6">{{ stats.viewer_count }}</span>
+                            </div>
+                            <div class="text-muted">По ролям</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="features-section py-5 mb-5">
+    <div class="container">
+        <h2 class="text-center mb-5">Основные возможности</h2>
+        <div class="row g-4">
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm feature-card">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-circle bg-primary-light text-primary mx-auto mb-4">
+                            <i class="bi bi-people-fill"></i>
+                        </div>
+                        <h3 class="card-title h5 mb-3">Управление командами</h3>
+                        <p class="card-text text-muted">Создание, редактирование и удаление команд в кластере Kubernetes. Настройка окружений для каждой команды.</p>
+                        <a href="/teams" class="btn btn-sm btn-primary mt-3">
+                            <i class="bi bi-arrow-right me-1"></i> Перейти к командам
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm feature-card">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-circle bg-primary-light text-primary mx-auto mb-4">
+                            <i class="bi bi-person-fill"></i>
+                        </div>
+                        <h3 class="card-title h5 mb-3">Управление пользователями</h3>
+                        <p class="card-text text-muted">Создание, редактирование и удаление пользователей в кластере Kubernetes. Назначение ролей и команд.</p>
+                        <a href="/users" class="btn btn-sm btn-primary mt-3">
+                            <i class="bi bi-arrow-right me-1"></i> Перейти к пользователям
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4">
+                <div class="card h-100 border-0 shadow-sm feature-card">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-circle bg-primary-light text-primary mx-auto mb-4">
+                            <i class="bi bi-gear-fill"></i>
+                        </div>
+                        <h3 class="card-title h5 mb-3">Автоматизация</h3>
+                        <p class="card-text text-muted">Автоматическое создание namespace, ролей и привилегий для команд и пользователей в кластере Kubernetes.</p>
+                        <a href="https://github.com/kubernetes/kubernetes" target="_blank" class="btn btn-sm btn-primary mt-3">
+                            <i class="bi bi-arrow-right me-1"></i> Узнать больше
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="how-it-works-section py-5 bg-light">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6 mb-4 mb-lg-0">
+                <h2 class="mb-4">Как это работает</h2>
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-primary">1</div>
+                        <div class="timeline-content">
+                            <h4 class="h5 mb-2">Создайте команду</h4>
+                            <p class="text-muted">Определите команду и настройте окружения для разработки, тестирования и продакшена</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-primary">2</div>
+                        <div class="timeline-content">
+                            <h4 class="h5 mb-2">Добавьте пользователей</h4>
+                            <p class="text-muted">Создайте пользователей и назначьте им соответствующие роли (админ, разработчик, наблюдатель)</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-primary">3</div>
+                        <div class="timeline-content">
+                            <h4 class="h5 mb-2">Автоматическое создание ресурсов</h4>
+                            <p class="text-muted">Оператор автоматически создаст все необходимые ресурсы в кластере Kubernetes</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-primary">4</div>
+                        <div class="timeline-content">
+                            <h4 class="h5 mb-2">Доступ к окружениям</h4>
+                            <p class="text-muted">Пользователи получат доступ к своим окружениям через kubeconfig файл</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <h3 class="h4 mb-3 text-primary">Полезные советы</h3>
+                        <div class="tips-list">
+                            <div class="tip-item d-flex mb-3">
+                                <div class="tip-icon me-3 text-primary">
+                                    <i class="bi bi-lightbulb-fill"></i>
+                                </div>
+                                <div class="tip-content">
+                                    <h5 class="h6 mb-1">Скачайте kubeconfig</h5>
+                                    <p class="text-muted mb-0">Скачайте kubeconfig для пользователя на странице просмотра пользователя, чтобы предоставить ему доступ к кластеру.</p>
+                                </div>
+                            </div>
+                            <div class="tip-item d-flex mb-3">
+                                <div class="tip-icon me-3 text-primary">
+                                    <i class="bi bi-shield-lock-fill"></i>
+                                </div>
+                                <div class="tip-content">
+                                    <h5 class="h6 mb-1">Управление ролями</h5>
+                                    <p class="text-muted mb-0">Назначайте роли пользователям в соответствии с их обязанностями: администраторы, разработчики или наблюдатели.</p>
+                                </div>
+                            </div>
+                            <div class="tip-item d-flex">
+                                <div class="tip-icon me-3 text-primary">
+                                    <i class="bi bi-layers-fill"></i>
+                                </div>
+                                <div class="tip-content">
+                                    <h5 class="h6 mb-1">Настройка квот</h5>
+                                    <p class="text-muted mb-0">Настраивайте квоты ресурсов для каждого окружения, чтобы контролировать использование ресурсов кластера.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if stats.teams_count > 0 or stats.users_count > 0 %}
+<div class="system-status-section py-5">
+    <div class="container">
+        <h2 class="text-center mb-5">Текущее состояние системы</h2>
+        <div class="row">
+            {% if stats.teams_count > 0 %}
+            <div class="col-lg-6 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white border-0 py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="bi bi-people-fill me-2 text-primary"></i>
+                                Команды
+                            </h5>
+                            <span class="badge bg-primary rounded-pill">{{ stats.teams_count }}</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="progress mb-3" style="height: 25px; border-radius: 12px;">
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: 100%;" aria-valuenow="{{ stats.teams_count }}" aria-valuemin="0" aria-valuemax="{{ stats.teams_count }}">
+                                {{ stats.teams_count }} команд
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3">
+                            <div class="col-6">
+                                <div class="stat-card bg-light p-3 rounded text-center">
+                                    <div class="h3 mb-0 text-primary">{{ stats.environments_count }}</div>
+                                    <div class="small text-muted">Всего окружений</div>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="stat-card bg-light p-3 rounded text-center">
+                                    <div class="h3 mb-0 text-primary">{{ (stats.environments_count / stats.teams_count)|round(1) if stats.teams_count > 0 else 0 }}</div>
+                                    <div class="small text-muted">В среднем на команду</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <a href="{{ url_for('list_teams') }}" class="btn btn-outline-primary">
+                                <i class="bi bi-arrow-right me-1"></i> Перейти к командам
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            {% if stats.users_count > 0 %}
+            <div class="col-lg-6 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white border-0 py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">
+                                <i class="bi bi-person-fill me-2 text-primary"></i>
+                                Пользователи
+                            </h5>
+                            <span class="badge bg-primary rounded-pill">{{ stats.users_count }}</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="progress mb-3" style="height: 25px; border-radius: 12px; overflow: hidden;">
+                            <div class="progress-bar bg-danger" role="progressbar" style="width: {{ (stats.admin_count / stats.users_count * 100) if stats.users_count > 0 else 0 }}%;" aria-valuenow="{{ stats.admin_count }}" aria-valuemin="0" aria-valuemax="{{ stats.users_count }}">
+                                {{ stats.admin_count }}
+                            </div>
+                            <div class="progress-bar bg-primary" role="progressbar" style="width: {{ (stats.developer_count / stats.users_count * 100) if stats.users_count > 0 else 0 }}%;" aria-valuenow="{{ stats.developer_count }}" aria-valuemin="0" aria-valuemax="{{ stats.users_count }}">
+                                {{ stats.developer_count }}
+                            </div>
+                            <div class="progress-bar bg-secondary" role="progressbar" style="width: {{ (stats.viewer_count / stats.users_count * 100) if stats.users_count > 0 else 0 }}%;" aria-valuenow="{{ stats.viewer_count }}" aria-valuemin="0" aria-valuemax="{{ stats.users_count }}">
+                                {{ stats.viewer_count }}
+                            </div>
+                        </div>
+                        
+                        <div class="row mb-3 text-center">
+                            <div class="col-4">
+                                <div class="role-stat">
+                                    <span class="badge bg-danger mb-2 d-block mx-auto" style="width: fit-content;">{{ stats.admin_count }}</span>
+                                    <div class="small text-muted">Администраторы</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="role-stat">
+                                    <span class="badge bg-primary mb-2 d-block mx-auto" style="width: fit-content;">{{ stats.developer_count }}</span>
+                                    <div class="small text-muted">Разработчики</div>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="role-stat">
+                                    <span class="badge bg-secondary mb-2 d-block mx-auto" style="width: fit-content;">{{ stats.viewer_count }}</span>
+                                    <div class="small text-muted">Наблюдатели</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid">
+                            <a href="{{ url_for('list_users') }}" class="btn btn-outline-primary">
+                                <i class="bi bi-arrow-right me-1"></i> Перейти к пользователям
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Добавляем стили для новых элементов -->
+<style>
+    .text-gradient {
+        background: linear-gradient(90deg, var(--primary-color) 0%, #5c6bc0 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+    
+    .bg-primary-light {
+        background-color: rgba(63, 81, 181, 0.1);
+    }
+    
+    .bg-gradient-light {
+        background: linear-gradient(to right, #f8f9fa, #ffffff);
+    }
+    
+    .dashboard-preview {
+        background-color: #fff;
+        border: 1px solid rgba(0,0,0,0.05);
+        transform: rotate(-3deg);
+    }
+    
+    .floating-badge {
+        transform: rotate(10deg);
+    }
+    
+    .icon-circle {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+    }
+    
+    .feature-card {
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border-radius: 12px;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+    }
+    
+    .stats-item {
+        position: relative;
+    }
+    
+    .stats-item:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        right: 0;
+        top: 20%;
+        height: 60%;
+        width: 1px;
+        background-color: rgba(0,0,0,0.1);
+    }
+    
+    .counter {
+        font-size: 3rem;
+    }
+    
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 15px;
+        top: 0;
+        height: 100%;
+        width: 2px;
+        background-color: rgba(63, 81, 181, 0.2);
+    }
+    
+    .timeline-item {
+        position: relative;
+        padding-bottom: 30px;
+    }
+    
+    .timeline-marker {
+        position: absolute;
+        left: -30px;
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        z-index: 1;
+    }
+    
+    .tip-icon {
+        font-size: 1.5rem;
+    }
+    
+    .stat-card {
+        transition: transform 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    @media (max-width: 767.98px) {
+        .stats-item:nth-child(2n)::after {
+            display: none;
+        }
+    }
+</style>
+{% endblock %}

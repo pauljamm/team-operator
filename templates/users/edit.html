@@ -1,0 +1,66 @@
+{% extends "layout.html" %}
+
+{% block title %}Редактирование пользователя{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Редактирование пользователя: {{ user.metadata.name }}</h1>
+    <a href="{{ url_for('show_user', name=user.metadata.name) }}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Назад к просмотру
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" action="{{ url_for('edit_user', name=user.metadata.name) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="mb-3">
+                <label for="name" class="form-label">Имя пользователя</label>
+                <input type="text" class="form-control" id="name" value="{{ user.metadata.name }}" disabled>
+                <div class="form-text">Имя пользователя нельзя изменить после создания.</div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="fullName" class="form-label">Полное имя</label>
+                <input type="text" class="form-control" id="fullName" name="fullName" value="{{ user.spec.fullName }}" required>
+            </div>
+            
+            <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="email" name="email" value="{{ user.spec.email }}" required>
+            </div>
+            
+            <div class="mb-3">
+                <label for="role" class="form-label">Роль</label>
+                <select class="form-select" id="role" name="role" required>
+                    <option value="admin" {% if user.spec.role == 'admin' %}selected{% endif %}>Администратор</option>
+                    <option value="developer" {% if user.spec.role == 'developer' %}selected{% endif %}>Разработчик</option>
+                    <option value="viewer" {% if user.spec.role == 'viewer' %}selected{% endif %}>Наблюдатель</option>
+                </select>
+                <div class="form-text">
+                    <strong>Администратор</strong> - полный доступ ко всем ресурсам.<br>
+                    <strong>Разработчик</strong> - может создавать и изменять большинство ресурсов.<br>
+                    <strong>Наблюдатель</strong> - может только просматривать ресурсы.
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Команды</label>
+                <select class="form-select" name="teams" multiple>
+                    {% for team in teams %}
+                    <option value="{{ team.metadata.name }}" {% if user.spec.teams and team.metadata.name in user.spec.teams %}selected{% endif %}>
+                        {{ team.metadata.name }} ({{ team.spec.description }})
+                    </option>
+                    {% endfor %}
+                </select>
+                <div class="form-text">Выберите команды, в которые будет входить пользователь.</div>
+            </div>
+            
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

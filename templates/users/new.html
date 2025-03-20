@@ -1,0 +1,64 @@
+{% extends "layout.html" %}
+
+{% block title %}Создание пользователя{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Создание нового пользователя</h1>
+    <a href="{{ url_for('list_users') }}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left"></i> Назад к списку
+    </a>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="post" action="{{ url_for('new_user') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            
+            <div class="mb-3">
+                <label for="name" class="form-label">Имя пользователя</label>
+                <input type="text" class="form-control" id="name" name="name" required pattern="[a-z0-9]([-a-z0-9]*[a-z0-9])?" title="Имя должно содержать только строчные буквы, цифры и дефисы, и не должно начинаться или заканчиваться дефисом">
+                <div class="form-text">Имя должно содержать только строчные буквы, цифры и дефисы, и не должно начинаться или заканчиваться дефисом.</div>
+            </div>
+            
+            <div class="mb-3">
+                <label for="fullName" class="form-label">Полное имя</label>
+                <input type="text" class="form-control" id="fullName" name="fullName" required>
+            </div>
+            
+            <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+            
+            <div class="mb-3">
+                <label for="role" class="form-label">Роль</label>
+                <select class="form-select" id="role" name="role" required>
+                    <option value="admin">Администратор</option>
+                    <option value="developer" selected>Разработчик</option>
+                    <option value="viewer">Наблюдатель</option>
+                </select>
+                <div class="form-text">
+                    <strong>Администратор</strong> - полный доступ ко всем ресурсам.<br>
+                    <strong>Разработчик</strong> - может создавать и изменять большинство ресурсов.<br>
+                    <strong>Наблюдатель</strong> - может только просматривать ресурсы.
+                </div>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Команды</label>
+                <select class="form-select" name="teams" multiple>
+                    {% for team in teams %}
+                    <option value="{{ team.metadata.name }}">{{ team.metadata.name }} ({{ team.spec.description }})</option>
+                    {% endfor %}
+                </select>
+                <div class="form-text">Выберите команды, в которые будет входить пользователь.</div>
+            </div>
+            
+            <div class="d-grid gap-2">
+                <button type="submit" class="btn btn-primary">Создать пользователя</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

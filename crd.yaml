@@ -1,0 +1,162 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: users.team.example.com
+spec:
+  group: team.example.com
+  names:
+    kind: User
+    plural: users
+    singular: user
+    shortNames:
+      - usr
+  scope: Cluster
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                fullName:
+                  type: string
+                  description: "Полное имя пользователя"
+                email:
+                  type: string
+                  description: "Email пользователя"
+                teams:
+                  type: array
+                  description: "Список команд, в которых состоит пользователь"
+                  items:
+                    type: string
+                role:
+                  type: string
+                  description: "Роль пользователя (admin, developer, viewer)"
+                  enum: ["admin", "developer", "viewer"]
+                  default: "developer"
+              required:
+                - fullName
+                - email
+            status:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Email
+          type: string
+          jsonPath: .spec.email
+        - name: Role
+          type: string
+          jsonPath: .spec.role
+        - name: KubeConfig
+          type: boolean
+          jsonPath: .status.team-operator.kubeconfig_created
+          description: "Наличие kubeconfig"
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: teams.team.example.com
+spec:
+  group: team.example.com
+  names:
+    kind: Team
+    plural: teams
+    singular: team
+    shortNames:
+      - tm
+  scope: Cluster
+  versions:
+    - name: v1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                description:
+                  type: string
+                  description: "Описание команды"
+                environments:
+                  type: array
+                  description: "Список окружений команды"
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        description: "Имя окружения"
+                      description:
+                        type: string
+                        description: "Описание окружения"
+                      labels:
+                        type: object
+                        description: "Дополнительные метки для namespace"
+                        x-kubernetes-preserve-unknown-fields: true
+                      quota:
+                        type: object
+                        description: "Квоты ресурсов для окружения"
+                        properties:
+                          cpu:
+                            type: string
+                            description: "Запрашиваемые CPU ресурсы"
+                          memory:
+                            type: string
+                            description: "Запрашиваемая память"
+                          cpu_limit:
+                            type: string
+                            description: "Лимит CPU ресурсов"
+                          memory_limit:
+                            type: string
+                            description: "Лимит памяти"
+                          pods:
+                            type: string
+                            description: "Максимальное количество подов"
+                          services:
+                            type: string
+                            description: "Максимальное количество сервисов"
+                      network_policy:
+                        type: object
+                        description: "Настройки сетевой политики"
+                        properties:
+                          ingress:
+                            type: array
+                            description: "Правила входящего трафика"
+                            items:
+                              type: object
+                              x-kubernetes-preserve-unknown-fields: true
+                          egress:
+                            type: array
+                            description: "Правила исходящего трафика"
+                            items:
+                              type: object
+                              x-kubernetes-preserve-unknown-fields: true
+                    required:
+                      - name
+            status:
+              type: object
+              x-kubernetes-preserve-unknown-fields: true
+      subresources:
+        status: {}
+      additionalPrinterColumns:
+        - name: Environments
+          type: integer
+          jsonPath: .status.create_fn.environments_created
+        - name: Users
+          type: string
+          jsonPath: .spec.users
+          description: "Члены команды"
+        - name: Age
+          type: date
+          jsonPath: .metadata.creationTimestamp

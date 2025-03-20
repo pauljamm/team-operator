@@ -1,0 +1,10 @@
+apiVersion: team.example.com/v1
+kind: User
+metadata:
+  name: john-doe
+spec:
+  fullName: "John Doe"
+  email: "john.doe@example.com"
+  teams:
+    - dev-team
+  role: "developer"
